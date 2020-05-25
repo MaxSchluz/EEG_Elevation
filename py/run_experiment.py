@@ -30,10 +30,11 @@ def run_experiment(subject, path_cfg): #funktion für das ganze experiment
 def run_block(block, subject, fs, dur_stim, dur_adapter, expdir):
     seq = np.loadtxt(expdir+subject+"/"+subject+"_run_"+str(block)+".seq")
     #seq=[2,4,0,14,0,16]
+
     n_adapter= int(dur_adapter * fs)
     n_target=int(dur_stim * fs)
     stim = slab.Sound.clicktrain()
-	response=[]
+	responses=[]
 
     #set variables for RPvdsEx circuits that don't change
     setup.set_variable(variable="n_target", value=n_target, proc="RX8s")
@@ -53,7 +54,7 @@ def run_block(block, subject, fs, dur_stim, dur_adapter, expdir):
     		while not setup.get_variable(variable="response", proc="RP2"):
                 time.sleep(0.01)
     		ele,azi = camera.get_headpose()
-    		response.append([ch, ele, azi])
+    		responses.append([target_i, target_ch, ele, azi])
         else:
             setup.set_variable(variable="chan", value=25, proc="RX8s")
             setup.set_variable(variable="ch_nr", value=ch, proc="RX8s")
@@ -61,9 +62,10 @@ def run_block(block, subject, fs, dur_stim, dur_adapter, expdir):
             setup.wait_to_finish_playing()
         time.sleep(0.4)#ISI
 
-    return response
-    file_path= cfg["expdir"] + subject+"/"+subject+"_response_" + ".txt"
-    np.savetxt(path, np.asanyarray(response, dtype=int), fmt='%i', delimiter=",")
+    return responses
+
+    path= cfg["expdir"] + subject+"/"+subject+"_responses_" +str(block)+ ".txt"
+    np.savetxt(path, np.asanyarray(responses, dtype=int), fmt='%i', delimiter=",")
 
 
 #TEST: example run block
@@ -80,14 +82,3 @@ if __name__ == "__main__":
     path_cfg = "C:/Projects/max_elevation_eeg/bachelor_thesis_eeg/cfg/test_experiment.cfg" # pfad des konfigurationsfiles
     init()
 	run_experiment(subject,path_cfg)
-
-
-#maybe needed for evalation of headpose?
-def target_sequence(seq):
-ch_target=[]#empty list for target channels
-zeros=np.where(seq==0)
-index_zeros=zeros[0].tolist()#search indeces of zeros
-for s in range(len(index_zeros)):#loop through length of index_zeros
-  index_target=index_zeros[s]-1#for every element, pick out element before target
-  ch_target.append(seq[index_target])#append target indeces to ch_target list
-return ch_target
